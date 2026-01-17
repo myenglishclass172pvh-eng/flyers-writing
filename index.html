@@ -49,7 +49,7 @@
   </div>
 
   <script>
-    // Web App URL của bạn (đã điền sẵn)
+    // Web App URL của bạn
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyN4DUUy8udv2M3_gfI_KK2e1XZ1lRzFARS4vSz9CLi-53q7Pn2BAvln4JaIZoAkQdzFw/exec";
 
     async function submitWriting() {
@@ -81,7 +81,20 @@
           body: JSON.stringify({ topic, requirements, studentText })
         });
 
-        const data = await res.json();
+        // ✅ ĐỌC TEXT TRƯỚC để tránh lỗi "Unexpected end of JSON input"
+        const raw = await res.text();
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (parseErr) {
+          throw new Error("Server trả về không phải JSON. Nội dung (200 ký tự đầu):\n" + raw.slice(0, 200));
+        }
+
+        // Nếu HTTP status không OK, hiển thị lỗi rõ ràng
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ` + (data.error || "Unknown error"));
+        }
 
         if (data.ok) {
           resultBox.style.display = "block";
@@ -92,9 +105,12 @@
           errorBox.style.display = "block";
           errorBox.innerText = "Lỗi: " + (data.error || "Không rõ lỗi");
         }
+
       } catch (e) {
         errorBox.style.display = "block";
-        errorBox.innerText = "Không thể kết nối. Hãy kiểm tra Web App URL hoặc quyền truy cập Web App.";
+        errorBox.innerText =
+          "Không thể chấm bài.\n" +
+          (e && e.message ? e.message : "Hãy kiểm tra Web App URL hoặc quyền truy cập Web App.");
       } finally {
         btn.disabled = false;
         btn.innerText = "Nộp bài & Chấm";
