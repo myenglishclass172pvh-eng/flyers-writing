@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flyers Writing Lab AI</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f0f4f8; padding:12px; }
+    .card { max-width:760px; margin:auto; background:#fff; padding:18px; border-radius:14px; box-shadow:0 4px 14px rgba(0,0,0,.08);}
+    h2 { text-align:center; margin:6px 0 2px; }
+    .sub { text-align:center; color:#666; margin:0 0 14px; }
+    label { font-weight:700; display:block; margin:10px 0 6px; }
+    input, textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:10px; font-size:16px; box-sizing:border-box; }
+    textarea { min-height:140px; resize:vertical; }
+    button { width:100%; margin-top:12px; padding:12px; border:0; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; background:#1a73e8; color:#fff; }
+    button:disabled { background:#9bb7e8; cursor:not-allowed; }
+    .box { margin-top:14px; padding:12px; border-radius:10px; border:1px solid #e6e6e6; background:#fff; display:none; line-height:1.6; white-space: normal; }
+    .err { background:#fde8e8; border-color:#f5b5b5; color:#b42318; }
+    .ok  { background:#f6ffed; border-color:#b7eb8f; }
+    .hint { color:#555; font-size:14px; margin-top:6px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width:700px){ .row{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Flyers Writing Lab ✍️</h2>
+    <p class="sub">Học sinh viết Picture Story (A1) → AI chấm & sửa lỗi tự động</p>
+
+    <div class="row">
+      <div>
+        <label>Chủ đề / Task</label>
+        <input id="topic" placeholder="Ví dụ: A boy loses his comic in the windy park..." />
+      </div>
+      <div>
+        <label>Yêu cầu</label>
+        <input id="req" placeholder="Ví dụ: 35–45 từ, dùng First/Then/Finally..." />
+      </div>
+    </div>
+
+    <label>Bài viết của học sinh</label>
+    <textarea id="studentText" placeholder="Once upon a time..."></textarea>
+    <div class="hint">Gợi ý: viết 6–8 câu ngắn, dùng First/Then/After that/Finally.</div>
+
+    <button id="btn" onclick="submitWriting()">Nộp bài & Chấm</button>
+
+    <div id="errorBox" class="box err"></div>
+    <div id="resultBox" class="box ok"></div>
+  </div>
+
+  <script>
+    // Web App URL của bạn (đã điền sẵn)
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyN4DUUy8udv2M3_gfI_KK2e1XZ1lRzFARS4vSz9CLi-53q7Pn2BAvln4JaIZoAkQdzFw/exec";
+
+    async function submitWriting() {
+      const topic = document.getElementById("topic").value.trim();
+      const requirements = document.getElementById("req").value.trim();
+      const studentText = document.getElementById("studentText").value.trim();
+
+      const btn = document.getElementById("btn");
+      const errorBox = document.getElementById("errorBox");
+      const resultBox = document.getElementById("resultBox");
+
+      errorBox.style.display = "none";
+      resultBox.style.display = "none";
+
+      if (studentText.length < 10) {
+        errorBox.style.display = "block";
+        errorBox.innerText = "Em viết dài hơn một chút nhé (ít nhất 10 ký tự).";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Đang chấm bài...";
+
+      try {
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          // Apps Script đôi khi kén CORS với application/json, nên dùng text/plain cho ổn định
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ topic, requirements, studentText })
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          resultBox.style.display = "block";
+          resultBox.innerHTML =
+            "<strong>KẾT QUẢ:</strong><br><br>" +
+            (data.feedback || "").replace(/\n/g, "<br>");
+        } else {
+          errorBox.style.display = "block";
+          errorBox.innerText = "Lỗi: " + (data.error || "Không rõ lỗi");
+        }
+      } catch (e) {
+        errorBox.style.display = "block";
+        errorBox.innerText = "Không thể kết nối. Hãy kiểm tra Web App URL hoặc quyền truy cập Web App.";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Nộp bài & Chấm";
+      }
+    }
+  </script>
+</body>
+</html>
