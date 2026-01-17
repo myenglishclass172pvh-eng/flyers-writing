@@ -110,12 +110,4 @@
         errorBox.style.display = "block";
         errorBox.innerText =
           "Không thể chấm bài.\n" +
-          (e && e.message ? e.message : "Hãy kiểm tra Web App URL hoặc quyền truy cập Web App.");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Nộp bài & Chấm";
-      }
-    }
-  </script>
-</body>
-</html>
+          (e && e.message ? e.message
